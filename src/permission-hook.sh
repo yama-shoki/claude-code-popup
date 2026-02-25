@@ -125,6 +125,8 @@ ${explanation}"
 
     dialog_text="${dialog_text//\\/\\\\}"
     dialog_text="${dialog_text//\"/\\\"}"
+    dialog_text="${dialog_text//\$/\\\$}"
+    dialog_text="${dialog_text//\`/\\\`}"
 
     decision=$(osascript -e "
         tell application \"System Events\"

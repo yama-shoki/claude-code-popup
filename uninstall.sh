@@ -10,10 +10,21 @@ echo ""
 
 # ── settings.json からフック削除 ──
 
-if [ -f "$SETTINGS_FILE" ] && jq -e '.hooks.PermissionRequest' "$SETTINGS_FILE" &>/dev/null; then
+if [ -f "$SETTINGS_FILE" ]; then
     tmp=$(mktemp)
-    jq 'del(.hooks.PermissionRequest)' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
-    echo "✓ settings.json から PermissionRequest フックを削除"
+    jq --arg cmd "${INSTALL_DIR}/permission-hook.sh" '
+        if .hooks.PermissionRequest then
+            .hooks.PermissionRequest = [
+                .hooks.PermissionRequest[] |
+                .hooks = [.hooks[] | select(.command != $cmd)] |
+                select(.hooks | length > 0)
+            ] |
+            if (.hooks.PermissionRequest | length) == 0 then
+                del(.hooks.PermissionRequest)
+            else . end
+        else . end
+    ' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
+    echo "✓ settings.json から permission-popup フックを削除"
 fi
 
 # ── ファイル削除 ──

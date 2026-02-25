@@ -70,15 +70,17 @@ if [ ! -f "$SETTINGS_FILE" ]; then
     echo '{}' > "$SETTINGS_FILE"
 fi
 
-# 既に PermissionRequest フックが登録済みか確認
-if jq -e '.hooks.PermissionRequest' "$SETTINGS_FILE" &>/dev/null; then
+# 自分のフックが登録済みか確認（コマンドパスで判定）
+if jq -e --arg cmd "${INSTALL_DIR}/permission-hook.sh" \
+    '.hooks.PermissionRequest[]?.hooks[]? | select(.command == $cmd)' \
+    "$SETTINGS_FILE" &>/dev/null; then
     echo "✓ PermissionRequest フックは既に登録済み"
 else
     echo "⚙ settings.json にフックを登録中..."
     tmp=$(mktemp)
     jq --arg cmd "${INSTALL_DIR}/permission-hook.sh" '
         .hooks = (.hooks // {}) |
-        .hooks.PermissionRequest = [
+        .hooks.PermissionRequest = (.hooks.PermissionRequest // []) + [
             {
                 "matcher": "",
                 "hooks": [
