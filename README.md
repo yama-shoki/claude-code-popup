@@ -4,9 +4,9 @@ Claude Code の権限リクエストを macOS ネイティブポップアップ�
 
 コマンドの内容を日本語で解説し、リスクレベルを5段階で色分け表示。許可/拒否をポップアップから直接操作できます。
 
-<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 40 41" src="https://github.com/user-attachments/assets/8d1b710c-2fd9-4059-8c8c-14381beebbc2" />
+<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 47 29" src="https://github.com/user-attachments/assets/4a9e78cb-01c2-4994-a3f0-b26b79c6f949" />
 
-<img width="526" height="490" alt="スクリーンショット 2026-02-25 12 41 01" src="https://github.com/user-attachments/assets/6d6dd83a-2262-4e58-8f54-28d653009e94" />
+<img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
 
 ## 特徴
 
