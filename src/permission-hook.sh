@@ -151,65 +151,38 @@ else
     exit 0
 fi
 
-# ── 「常に許可」の場合、settings.json にルールを追加 ──
-if [ "$decision" = "always_allow" ]; then
-    settings_file="$HOME/.claude/settings.json"
-    allow_pattern=""
-
+# ── 「常に許可」用のルールコンテンツ生成 ──
+build_rule_content() {
     case "$tool_name" in
         "Bash")
-            # コマンドの先頭部分（プログラム名+サブコマンド）でパターン生成
-            first_word=$(echo "$command_display" | awk '{print $1}')
-            second_word=$(echo "$command_display" | awk '{print $2}')
+            local first_word=$(echo "$command_display" | awk '{print $1}')
+            local second_word=$(echo "$command_display" | awk '{print $2}')
             case "$second_word" in
                 ""|"-"*)
-                    allow_pattern="Bash(${first_word}:*)"
+                    echo "${first_word}*"
                     ;;
                 *)
-                    allow_pattern="Bash(${first_word} ${second_word}:*)"
+                    echo "${first_word} ${second_word}*"
                     ;;
             esac
             ;;
         "Edit"|"MultiEdit")
-            allow_pattern="Edit(${command_display})"
+            echo "$command_display"
             ;;
         "Write")
-            allow_pattern="Write(${command_display})"
+            echo "$command_display"
             ;;
         "Read")
-            allow_pattern="Read(${command_display})"
-            ;;
-        "WebFetch")
-            allow_pattern="WebFetch"
-            ;;
-        "WebSearch")
-            allow_pattern="WebSearch"
-            ;;
-        "Task")
-            allow_pattern="Task"
-            ;;
-        mcp__*)
-            allow_pattern="${tool_name}"
+            echo "$command_display"
             ;;
         *)
-            allow_pattern="${tool_name}"
+            echo ""
             ;;
     esac
-
-    if [ -n "$allow_pattern" ] && [ -f "$settings_file" ]; then
-        tmp=$(mktemp)
-        if jq --arg p "$allow_pattern" \
-            '.permissions.allow = ((.permissions.allow // []) + [$p] | unique)' \
-            "$settings_file" > "$tmp" 2>/dev/null; then
-            mv "$tmp" "$settings_file"
-        else
-            rm -f "$tmp"
-        fi
-    fi
-fi
+}
 
 # ── Claude Code形式のJSONを出力 ──
-if [ "$decision" = "allow" ] || [ "$decision" = "always_allow" ]; then
+if [ "$decision" = "allow" ]; then
     jq -n '{
         hookSpecificOutput: {
             hookEventName: "PermissionRequest",
@@ -218,6 +191,44 @@ if [ "$decision" = "allow" ] || [ "$decision" = "always_allow" ]; then
             }
         }
     }'
+elif [ "$decision" = "always_allow" ]; then
+    rule_content=$(build_rule_content)
+    if [ -n "$rule_content" ]; then
+        jq -n --arg tn "$tool_name" --arg rc "$rule_content" '{
+            hookSpecificOutput: {
+                hookEventName: "PermissionRequest",
+                decision: {
+                    behavior: "allow",
+                    updatedPermissions: [
+                        {
+                            type: "addRules",
+                            rules: [ { toolName: $tn, ruleContent: $rc } ],
+                            behavior: "allow",
+                            destination: "userSettings"
+                        }
+                    ]
+                }
+            }
+        }'
+    else
+        # ruleContent 不要なツール（WebFetch, Task, MCP等）
+        jq -n --arg tn "$tool_name" '{
+            hookSpecificOutput: {
+                hookEventName: "PermissionRequest",
+                decision: {
+                    behavior: "allow",
+                    updatedPermissions: [
+                        {
+                            type: "addRules",
+                            rules: [ { toolName: $tn } ],
+                            behavior: "allow",
+                            destination: "userSettings"
+                        }
+                    ]
+                }
+            }
+        }'
+    fi
 else
     jq -n '{
         hookSpecificOutput: {
