@@ -8,9 +8,10 @@ Claude Code の権限リクエストを macOS ネイティブポップアップ�
 
 <img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
 
-## セットアップ
+<details open>
+<summary><h2>セットアップ（Claude Code に貼るだけ）</h2></summary>
 
-**以下をコピーして Claude Code に貼り付けるだけ。** インストールと権限設定が自動で完了します。
+**以下のプロンプトをコピーして Claude Code に貼り付けるだけ。** インストールと権限設定が自動で完了します。
 
 ### この設定で何が起きる？
 
@@ -90,6 +91,8 @@ cd ~/claude-code-popup && ./install.sh
 ■ 完了したら
 「セットアップ完了」と伝えて、次回のセッションから有効になることを教えて。
 ````
+
+</details>
 
 ## 特徴
 
