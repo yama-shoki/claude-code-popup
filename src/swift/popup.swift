@@ -279,8 +279,10 @@ struct PermissionView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "lock.open.fill")
                         .font(.system(size: 13))
-                    Text("常に許可")
-                        .font(.system(size: 12, weight: .medium))
+                    Text("このセッションで常に許可")
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
