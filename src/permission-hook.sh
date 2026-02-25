@@ -204,7 +204,7 @@ elif [ "$decision" = "always_allow" ]; then
                             type: "addRules",
                             rules: [ { toolName: $tn, ruleContent: $rc } ],
                             behavior: "allow",
-                            destination: "userSettings"
+                            destination: "session"
                         }
                     ]
                 }
@@ -222,7 +222,7 @@ elif [ "$decision" = "always_allow" ]; then
                             type: "addRules",
                             rules: [ { toolName: $tn } ],
                             behavior: "allow",
-                            destination: "userSettings"
+                            destination: "session"
                         }
                     ]
                 }
