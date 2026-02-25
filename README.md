@@ -11,7 +11,7 @@ Claude Code の権限リクエストを macOS ネイティブポップアップ�
 
 - **日本語で解説** — コマンドの意味と影響を日本語で表示
 - **リスク5段階表示** — 安全(緑) / 低(青) / 中(橙) / 高(赤) / 危険(赤)
-- **ポップアップから直接操作** — Enter で許可、Esc で拒否
+- **ポップアップから直接操作** — 拒否 / 許可 / 常に許可 の3択
 - **全ツール対応** — Bash, Edit, Write, WebFetch, WebSearch, Task, MCP
 - **設定不要** — インストールするだけ。API key 不要
 - **ネイティブ UI** — SwiftUI + SF Symbols、すりガラス背景
@@ -24,7 +24,7 @@ Claude Code がツール実行を要求
   → PermissionRequest フック発火
     → ルールエンジンでリスク判定 + 日本語説明生成
       → SwiftUI ポップアップ表示
-        → ユーザーが許可 or 拒否
+        → ユーザーが 拒否 / 許可 / 常に許可
           → Claude Code に結果を返却
 ```
 
@@ -40,8 +40,8 @@ Claude Code がツール実行を要求
 ## インストール
 
 ```bash
-git clone https://github.com/yama-shoki/claude-code--popup.git
-cd claude-code--popup
+git clone https://github.com/yama-shoki/claude-code-popup.git
+cd claude-code-popup
 ./install.sh
 ```
 
@@ -50,14 +50,14 @@ cd claude-code--popup
 ## アンインストール
 
 ```bash
-cd claude-code--popup
+cd claude-code-popup
 ./uninstall.sh
 ```
 
 ## ファイル構成
 
 ```
-claude-code--popup/
+claude-code-popup/
 ├── install.sh              # インストーラー
 ├── uninstall.sh            # アンインストーラー
 ├── src/
