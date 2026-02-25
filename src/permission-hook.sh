@@ -72,6 +72,19 @@ case "$tool_name" in
         ;;
 esac
 
+# ── safe リスクは自動許可（ポップアップなし）──
+if [ "$risk" = "safe" ]; then
+    jq -n '{
+        hookSpecificOutput: {
+            hookEventName: "PermissionRequest",
+            decision: {
+                behavior: "allow"
+            }
+        }
+    }'
+    exit 0
+fi
+
 # ── 日本語説明生成 ──
 explanation=$(generate_explanation "$tool_name" "$tool_input")
 impact=$(generate_impact "$tool_name" "$risk" "$tool_input")
@@ -100,7 +113,7 @@ if has_gui && [ -x "$POPUP_BIN" ]; then
         exit 0
     fi
 elif has_gui; then
-    # osascript フォールバック
+    # osascript フォールバック（ボタンは最大3つ）
     risk_label=""
     case "$risk" in
         "safe")     risk_label="安全" ;;
@@ -128,32 +141,80 @@ ${explanation}"
     dialog_text="${dialog_text//\$/\\\$}"
     dialog_text="${dialog_text//\`/\\\`}"
 
-    decision=$(osascript -e "
-        tell application \"System Events\"
-            activate
-            try
-                set theResult to display dialog \"${dialog_text}\" buttons {\"拒否\", \"許可\", \"このセッションで常に許可\"} default button \"許可\" cancel button \"拒否\" with title \"Claude Code 権限リクエスト\" with icon ${icon_type} giving up after ${TIMEOUT}
-                if gave up of theResult then
+    # リスクレベルに応じてボタン構成を変える（osascript は最大3ボタン）
+    if [ "$risk" = "high" ] || [ "$risk" = "critical" ]; then
+        # high/critical: 拒否 / 許可 のみ
+        decision=$(osascript -e "
+            tell application \"System Events\"
+                activate
+                try
+                    set theResult to display dialog \"${dialog_text}\" buttons {\"拒否\", \"許可\"} default button \"許可\" cancel button \"拒否\" with title \"Claude Code 権限リクエスト\" with icon ${icon_type} giving up after ${TIMEOUT}
+                    if gave up of theResult then
+                        return \"deny\"
+                    end if
+                    set btnName to button returned of theResult
+                    if btnName is \"許可\" then
+                        return \"allow\"
+                    else
+                        return \"deny\"
+                    end if
+                on error
                     return \"deny\"
-                end if
-                set btnName to button returned of theResult
-                if btnName is \"このセッションで常に許可\" then
-                    return \"always_allow\"
-                else if btnName is \"許可\" then
-                    return \"allow\"
-                else
+                end try
+            end tell
+        " 2>/dev/null || echo "deny")
+    elif [ "$risk" = "low" ]; then
+        # low: 拒否 / 許可 / 永久に許可
+        decision=$(osascript -e "
+            tell application \"System Events\"
+                activate
+                try
+                    set theResult to display dialog \"${dialog_text}\" buttons {\"拒否\", \"許可\", \"永久に許可\"} default button \"許可\" cancel button \"拒否\" with title \"Claude Code 権限リクエスト\" with icon ${icon_type} giving up after ${TIMEOUT}
+                    if gave up of theResult then
+                        return \"deny\"
+                    end if
+                    set btnName to button returned of theResult
+                    if btnName is \"永久に許可\" then
+                        return \"permanent_allow\"
+                    else if btnName is \"許可\" then
+                        return \"allow\"
+                    else
+                        return \"deny\"
+                    end if
+                on error
                     return \"deny\"
-                end if
-            on error
-                return \"deny\"
-            end try
-        end tell
-    " 2>/dev/null || echo "deny")
+                end try
+            end tell
+        " 2>/dev/null || echo "deny")
+    else
+        # medium: 拒否 / 許可 / このセッション中は許可
+        decision=$(osascript -e "
+            tell application \"System Events\"
+                activate
+                try
+                    set theResult to display dialog \"${dialog_text}\" buttons {\"拒否\", \"許可\", \"このセッション中は許可\"} default button \"許可\" cancel button \"拒否\" with title \"Claude Code 権限リクエスト\" with icon ${icon_type} giving up after ${TIMEOUT}
+                    if gave up of theResult then
+                        return \"deny\"
+                    end if
+                    set btnName to button returned of theResult
+                    if btnName is \"このセッション中は許可\" then
+                        return \"always_allow\"
+                    else if btnName is \"許可\" then
+                        return \"allow\"
+                    else
+                        return \"deny\"
+                    end if
+                on error
+                    return \"deny\"
+                end try
+            end tell
+        " 2>/dev/null || echo "deny")
+    fi
 else
     exit 0
 fi
 
-# ── 「このセッションで常に許可」用のルールコンテンツ生成 ──
+# ── 「セッション許可」「永久に許可」用のルールコンテンツ生成 ──
 build_rule_content() {
     case "$tool_name" in
         "Bash")
@@ -213,7 +274,6 @@ elif [ "$decision" = "always_allow" ]; then
             }
         }'
     else
-        # ruleContent 不要なツール（WebFetch, Task, MCP等）
         jq -n --arg tn "$tool_name" '{
             hookSpecificOutput: {
                 hookEventName: "PermissionRequest",
@@ -225,6 +285,43 @@ elif [ "$decision" = "always_allow" ]; then
                             rules: [ { toolName: $tn } ],
                             behavior: "allow",
                             destination: "session"
+                        }
+                    ]
+                }
+            }
+        }'
+    fi
+elif [ "$decision" = "permanent_allow" ]; then
+    rule_content=$(build_rule_content)
+    if [ -n "$rule_content" ]; then
+        jq -n --arg tn "$tool_name" --arg rc "$rule_content" '{
+            hookSpecificOutput: {
+                hookEventName: "PermissionRequest",
+                decision: {
+                    behavior: "allow",
+                    updatedPermissions: [
+                        {
+                            type: "addRules",
+                            rules: [ { toolName: $tn, ruleContent: $rc } ],
+                            behavior: "allow",
+                            destination: "user"
+                        }
+                    ]
+                }
+            }
+        }'
+    else
+        jq -n --arg tn "$tool_name" '{
+            hookSpecificOutput: {
+                hookEventName: "PermissionRequest",
+                decision: {
+                    behavior: "allow",
+                    updatedPermissions: [
+                        {
+                            type: "addRules",
+                            rules: [ { toolName: $tn } ],
+                            behavior: "allow",
+                            destination: "user"
                         }
                     ]
                 }

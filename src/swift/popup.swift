@@ -42,6 +42,14 @@ enum RiskLevel: String {
         case .high, .critical: return "exclamationmark.triangle.fill"
         }
     }
+
+    /// 永続的な許可ボタンを表示するか
+    var showPersistentOptions: Bool {
+        switch self {
+        case .safe, .low, .medium: return true
+        case .high, .critical: return false
+        }
+    }
 }
 
 // MARK: - Tool Info
@@ -84,6 +92,7 @@ struct PermissionView: View {
     let tool: ToolInfo
     let onAllow: () -> Void
     let onAlwaysAllow: () -> Void
+    let onPermanentAllow: () -> Void
     let onDeny: () -> Void
 
     var body: some View {
@@ -248,47 +257,68 @@ struct PermissionView: View {
     // MARK: - Buttons
 
     private var buttonSection: some View {
-        HStack(spacing: 8) {
-            Button(action: onDeny) {
-                HStack(spacing: 4) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 13))
-                    Text("拒否")
-                        .font(.system(size: 12, weight: .medium))
+        VStack(spacing: 8) {
+            // Primary actions: 拒否 / 許可
+            HStack(spacing: 8) {
+                Button(action: onDeny) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                        Text("拒否")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 32)
-            }
-            .buttonStyle(.bordered)
-            .keyboardShortcut(.cancelAction)
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
 
-            Button(action: onAllow) {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 13))
-                    Text("許可")
-                        .font(.system(size: 12, weight: .medium))
+                Button(action: onAllow) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 13))
+                        Text("許可")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 32)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
             }
-            .buttonStyle(.borderedProminent)
-            .keyboardShortcut(.defaultAction)
 
-            Button(action: onAlwaysAllow) {
-                HStack(spacing: 4) {
-                    Image(systemName: "lock.open.fill")
-                        .font(.system(size: 13))
-                    Text("このセッションで常に許可")
-                        .font(.system(size: 11, weight: .medium))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+            // Persistent permissions (low/medium only)
+            if tool.risk.showPersistentOptions {
+                HStack(spacing: 8) {
+                    Button(action: onAlwaysAllow) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock.open.fill")
+                                .font(.system(size: 12))
+                            Text("このセッション中は許可")
+                                .font(.system(size: 11, weight: .medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 30)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.green)
+
+                    Button(action: onPermanentAllow) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "infinity")
+                                .font(.system(size: 12))
+                            Text("永久に許可")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 30)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.purple)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 32)
             }
-            .buttonStyle(.bordered)
-            .tint(.green)
         }
     }
 }
@@ -323,6 +353,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onAlwaysAllow: { [weak self] in
                 self?.result = "always_allow"
+                NSApplication.shared.stopModal(withCode: .OK)
+            },
+            onPermanentAllow: { [weak self] in
+                self?.result = "permanent_allow"
                 NSApplication.shared.stopModal(withCode: .OK)
             },
             onDeny: { [weak self] in
