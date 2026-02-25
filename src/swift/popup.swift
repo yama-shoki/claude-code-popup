@@ -83,6 +83,7 @@ struct ToolInfo {
 struct PermissionView: View {
     let tool: ToolInfo
     let onAllow: () -> Void
+    let onAlwaysAllow: () -> Void
     let onDeny: () -> Void
 
     var body: some View {
@@ -116,7 +117,7 @@ struct PermissionView: View {
                     .padding(.horizontal, 24)
                     .padding(.vertical, 16)
                 }
-                .frame(maxHeight: 300)
+                .frame(maxHeight: 400)
 
                 // Footer (fixed)
                 VStack(spacing: 0) {
@@ -247,13 +248,13 @@ struct PermissionView: View {
     // MARK: - Buttons
 
     private var buttonSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             Button(action: onDeny) {
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 13))
                     Text("拒否")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
@@ -262,17 +263,30 @@ struct PermissionView: View {
             .keyboardShortcut(.cancelAction)
 
             Button(action: onAllow) {
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 13))
                     Text("許可")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 32)
             }
             .buttonStyle(.borderedProminent)
             .keyboardShortcut(.defaultAction)
+
+            Button(action: onAlwaysAllow) {
+                HStack(spacing: 4) {
+                    Image(systemName: "lock.open.fill")
+                        .font(.system(size: 13))
+                    Text("常に許可")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+            }
+            .buttonStyle(.bordered)
+            .tint(.green)
         }
     }
 }
@@ -303,6 +317,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             tool: tool,
             onAllow: { [weak self] in
                 self?.result = "allow"
+                NSApplication.shared.stopModal(withCode: .OK)
+            },
+            onAlwaysAllow: { [weak self] in
+                self?.result = "always_allow"
                 NSApplication.shared.stopModal(withCode: .OK)
             },
             onDeny: { [weak self] in
