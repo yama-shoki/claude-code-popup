@@ -1,58 +1,95 @@
 # cc-permission-popup
 
-Claude Code の権限リクエストを macOS ネイティブポップアップで表示するツール。
-
-コマンドの内容を日本語で解説し、リスクレベルを5段階で色分け表示。許可/拒否をポップアップから直接操作できます。
-
-<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 47 29" src="https://github.com/user-attachments/assets/4a9e78cb-01c2-4994-a3f0-b26b79c6f949" />
-
-<img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
-
 <details open>
-<summary><h2>セットアップ（Claude Code に貼るだけ）</h2></summary>
+<summary><strong>Claude Code に貼るだけでセットアップ</strong></summary>
 
-**以下のプロンプトをコピーして Claude Code に貼り付けるだけ。** インストールと権限設定が自動で完了します。
-
-### この設定で何が起きる？
-
-```
-✅ 確認なしで自動実行（ポップアップ出ない）
-   ファイルの読み書き・編集・検索
-   git status / diff / log / branch
-   npm run / bun run / テスト実行
-   ls / cat / echo 等の安全なコマンド
-
-⚠️ ポップアップで都度確認
-   npm install 等のパッケージ追加
-   git commit / merge / stash
-   docker コマンド
-   MCP サーバー操作
-
-🚫 自動でブロック（実行できない）
-   rm / sudo / git push / git reset
-   .env / 秘密鍵 / credentials の読み書き
-   curl / wget（意図しない外部通信を防止）
-   データベース直接操作（psql / mysql）
-```
+以下のプロンプトをコピーして Claude Code に貼り付けるだけ。対話形式でインストールと権限設定が完了します。
 
 ### プロンプト
 
 ````
-cc-permission-popup をセットアップして。以下の手順を順番に実行して、各ステップの結果を報告して。
+cc-permission-popup をセットアップして。
+以下の手順を順番に実行して、各ステップの結果をユーザーに報告しながら進めて。
 
-■ ステップ1: 環境チェック
-以下を確認:
+■ ステップ1: これから何をするか説明
+ユーザーにこう伝えて:
+
+「cc-permission-popup をセットアップします。
+これは Claude Code がコマンドを実行する前に、macOS ネイティブポップアップで
+日本語の説明付きで許可/拒否を選べるようにするツールです。
+
+セットアップでは以下を行います:
+1. 必要なツールの確認
+2. ビルド＆インストール
+3. 権限設定（どの操作を自動許可/ブロックするか）
+
+3 の権限設定ではあなたに確認を取りながら進めます。
+それでは始めます！」
+
+■ ステップ2: 環境チェック
+以下を確認して結果を報告:
 - jq がインストールされているか (なければ brew install jq を案内)
 - swiftc が利用可能か (なければ xcode-select --install を案内)
 - macOS バージョンが 14.0 以上か
+全て揃っていたら次へ。不足があればインストール方法を案内。
 
-■ ステップ2: インストール
+■ ステップ3: インストール
 git clone https://github.com/yama-shoki/claude-code-popup.git ~/claude-code-popup
 cd ~/claude-code-popup && ./install.sh
+結果を報告して次へ。
 
-■ ステップ3: 権限設定
-~/.claude/settings.json の permissions を以下で更新。
-既存の設定（hooks, env, statusLine 等）はそのまま維持して、permissions だけ差し替え。
+■ ステップ4: 権限設定（対話式）
+ユーザーに以下を説明して確認を取る:
+
+「次に、どの操作を自動許可/ブロックするか設定します。
+~/.claude/settings.json の permissions を更新します。
+推奨設定を用意しているので、内容を説明します。
+
+━━━ 自動許可（確認なしで実行される操作）━━━
+
+  ファイル操作:
+    Read / Edit / Write / Glob / Grep 等
+    → コードの読み書きは開発の基本動作なので自動許可
+
+  Git（読み取りのみ）:
+    git status / diff / log / branch / show
+    → 状態確認だけ。push や commit は含まない
+
+  開発コマンド:
+    npm run / bun run / テスト実行 / node
+    → スクリプト実行やテストは日常的な操作
+
+  情報表示:
+    ls / cat / echo / pwd 等
+    → 読み取り専用で安全
+
+━━━ 自動ブロック（実行できない操作）━━━
+
+  破壊操作:
+    rm / sudo / git push / git reset / git rebase
+    → ファイル削除やリモート操作は事故防止のためブロック
+
+  機密ファイル:
+    .env / 秘密鍵(.key, .pem) / credentials
+    → 読み取り・編集・書き込み全てブロック
+
+  ネットワーク:
+    curl / wget / nc
+    → 意図しない外部通信を防止
+
+  データベース:
+    psql / mysql / mongod
+    → 直接操作を防止
+
+━━━ ポップアップで確認（上記以外）━━━
+    npm install / git commit / docker 等
+
+この推奨設定を適用してよいですか？
+変更したい項目があれば教えてください。」
+
+ユーザーがOKしたら、以下の permissions を ~/.claude/settings.json に適用する。
+既存の設定（hooks, env, statusLine 等）はそのまま維持して、permissions だけ更新。
+ユーザーが変更を希望した場合は調整してから適用。
 
 {
   "permissions": {
@@ -88,11 +125,30 @@ cd ~/claude-code-popup && ./install.sh
   }
 }
 
-■ 完了したら
-「セットアップ完了」と伝えて、次回のセッションから有効になることを教えて。
+■ ステップ5: 完了報告
+「セットアップ完了！
+
+次回の Claude Code セッションから有効になります。
+（今のセッションには反映されないので、新しいセッションを開始してください）
+
+ポップアップの動作:
+- 安全な操作 → 確認なしで自動実行
+- 中程度の操作 → ポップアップで確認
+- 危険な操作 → ポップアップで確認（許可/拒否のみ）
+- 禁止操作 → 自動ブロック
+
+後から設定を変えたい場合は ~/.claude/settings.json の permissions を編集してください。」
 ````
 
 </details>
+
+Claude Code の権限リクエストを macOS ネイティブポップアップで表示するツール。
+
+コマンドの内容を日本語で解説し、リスクレベルを5段階で色分け表示。許可/拒否をポップアップから直接操作できます。
+
+<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 47 29" src="https://github.com/user-attachments/assets/4a9e78cb-01c2-4994-a3f0-b26b79c6f949" />
+
+<img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
 
 ## 特徴
 
