@@ -57,7 +57,8 @@ cd ~/claude-code-popup && ./install.sh
   自動許可する操作:
     - Read / Edit / Write / Glob / Grep（コードの読み書き）
     - Task / WebSearch / WebFetch（調査・サブタスク）
-    - ls / cat / echo / pwd / which 等（情報表示）
+    - Skill（スキル実行全般）
+    - ls / cat / echo / pwd / which / stat / wc / file 等（情報表示）
 
   理由: 開発の基本動作で、破壊的な操作はありません。
 
@@ -67,14 +68,17 @@ cd ~/claude-code-popup && ./install.sh
 カテゴリ 2/4: Git・開発コマンド（自動許可）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-「【2/4】Git（読み取り）と開発コマンドを自動許可にします。
+「【2/4】Git・開発コマンド・ユーティリティを自動許可にします。
 
   自動許可する操作:
-    - git status / diff / log / branch / show / remote（状態確認のみ）
-    - npm run / bun run / npm test / bun test（スクリプト実行）
-    - node / npx / bunx（ランタイム実行）
+    - git（全サブコマンド: status, diff, log, commit, merge 等）
+    - npm / bun / bunx / npx / node（パッケージ管理・ランタイム）
+    - gh（GitHub CLI）
+    - docker（コンテナ操作）
+    - find / grep / sort / diff / tree（ファイル検索・比較）
+    - python3 / for / while / test / sleep / timeout（スクリプト系）
 
-  ※ git commit / git push は含みません（ポップアップで確認されます）
+  ※ git push / git reset / git rebase は deny で別途ブロックされます
 
   → これでOK？ (y / 変更内容)」
 
@@ -127,12 +131,15 @@ cd ~/claude-code-popup && ./install.sh
       "Bash(cat:*)", "Bash(head:*)", "Bash(tail:*)",
       "Bash(date:*)", "Bash(whoami:*)", "Bash(uname:*)",
       "Bash(stat:*)", "Bash(env:*)", "Bash(printenv:*)",
-      "Bash(git status:*)", "Bash(git diff:*)",
-      "Bash(git log:*)", "Bash(git branch:*)",
-      "Bash(git show:*)", "Bash(git remote:*)",
-      "Bash(npm run:*)", "Bash(bun run:*)",
-      "Bash(npm test:*)", "Bash(bun test:*)",
-      "Bash(node:*)", "Bash(npx:*)", "Bash(bunx:*)"
+      "Bash(find:*)", "Bash(grep:*)", "Bash(sort:*)",
+      "Bash(comm:*)", "Bash(diff:*)", "Bash(tree:*)",
+      "Bash(git:*)", "Bash(npm:*)", "Bash(bun:*)",
+      "Bash(bunx:*)", "Bash(npx:*)", "Bash(node:*)",
+      "Bash(python3:*)", "Bash(gh:*)", "Bash(docker:*)",
+      "Bash(for:*)", "Bash(while:*)", "Bash(test:*)",
+      "Bash(sleep:*)", "Bash(timeout:*)",
+      "Bash(md5:*)", "Bash(openssl:*)",
+      "Skill(*)"
     ],
     "deny": [
       "Bash(sudo:*)", "Bash(rm:*)", "Bash(rm -rf:*)",
@@ -150,10 +157,10 @@ cd ~/claude-code-popup && ./install.sh
   }
 }
 
-ユーザーが特定のカテゴリで変更を希望した場合は、該当する項目を allow/deny 間で移動、
-または削除して permissions を調整してから適用する。
-上記以外の操作（npm install, git commit, docker 等）はどちらにも含まれないため、
-ポップアップで都度確認される。
+ポイント:
+- allow は `Bash(git:*)` のようにワイルドカードで広く許可し、deny で危険な操作だけピンポイントでブロック
+- deny は allow より優先されるので、`Bash(git:*)` で全許可しても `Bash(git push:*)` はブロックされる
+- ユーザーが特定のカテゴリで変更を希望した場合は、該当する項目を allow/deny 間で移動、または削除して調整してから適用する
 
 ■ ステップ5: 完了報告
 「セットアップ完了！
