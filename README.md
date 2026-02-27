@@ -1,5 +1,15 @@
 # cc-permission-popup
 
+Claude Code の権限リクエストを macOS ネイティブポップアップで表示するツール。
+
+コマンドの内容を日本語で解説し、リスクレベルを5段階で色分け表示。許可/拒否をポップアップから直接操作できます。
+
+<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 47 29" src="https://github.com/user-attachments/assets/4a9e78cb-01c2-4994-a3f0-b26b79c6f949" />
+
+<img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
+
+
+
 <details open>
 <summary><strong>Claude Code に貼るだけでセットアップ</strong></summary>
 
@@ -179,13 +189,7 @@ cd ~/claude-code-popup && ./install.sh
 
 </details>
 
-Claude Code の権限リクエストを macOS ネイティブポップアップで表示するツール。
 
-コマンドの内容を日本語で解説し、リスクレベルを5段階で色分け表示。許可/拒否をポップアップから直接操作できます。
-
-<img width="526" height="487" alt="スクリーンショット 2026-02-25 12 47 29" src="https://github.com/user-attachments/assets/4a9e78cb-01c2-4994-a3f0-b26b79c6f949" />
-
-<img width="526" height="412" alt="スクリーンショット 2026-02-25 12 47 49" src="https://github.com/user-attachments/assets/8d11b9fd-1b8b-4089-978a-2a8b489a01bb" />
 
 ## 特徴
 
